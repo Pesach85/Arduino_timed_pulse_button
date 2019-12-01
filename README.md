@@ -11,3 +11,6 @@ R2
 R3
 R4 	4 	220 Ω Resistenza
 S3 	1 	Pulsante
+
+
+https://imgur.com/7NLhKJJ
