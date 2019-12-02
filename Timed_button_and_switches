@@ -1,7 +1,7 @@
 /*
-  Timed pulse button v002 for Arduino by Pasquale Lombardi. 1/12/2019 Free for home and personal non commercial use. 
+  4 Timed pulse button v002b for Arduino by Pasquale Lombardi. 1/12/2019 Free for home and personal non commercial use. 
 */
-const int Puls = 3;
+const int Puls = 3; // presets input and output arduino ports
 const int SwitchTime = 4;
 const int SwitchTime2 = 5;
 const int Rele1 = 13;
@@ -18,8 +18,8 @@ bool flag_t2_settato = false;
 
 long t_att;              // Times variables
 long t;
-long t1 = 3*60*1000;
-long t2 = 30*1000;
+long t1;
+long t2;
 long tc;
 
 void setup() {
@@ -28,45 +28,43 @@ void setup() {
               pinMode(SwitchTime, INPUT); 
               pinMode(SwitchTime2, INPUT); 
               pinMode(Rele1, OUTPUT);
-  
+              
+              t1 = 3*60*1000; // timer presets
+              t2 = 30*1000;
+                
               Serial.begin(9600); // Serial initialization to read ON OFF states
 
              }
 
 void loop() {
+             lettura_input(); // routine lettura input
   
-            leggipin = digitalRead(Puls); // aggiorna variabile pin pulsante ad ogni ciclo
-            leggiswitch = digitalRead(SwitchTime);
-            leggiswitch2 = digitalRead(SwitchTime2); // aggiorna variabili switch
-            stato2 = digitalRead(Rele1); // salva stato output in una variabile per effettuare più facilmente confronti
+             stato2 = digitalRead(Rele1);
   
-            switch2();
+             switch2();
   
-            if (((leggipin)&&!stato2)||flag_timer) {
-                                                             timer();//inizializza timer
-                                                             if (!stato2) digitalWrite(Rele1,HIGH);
-                                                            } 
+             if (((leggipin)&&!stato2)||flag_timer) {
+                                                     timer();//inizializza timer
+                                                     if (!stato2) digitalWrite(Rele1,HIGH);
+                                                    } 
             }
 // Timer script, reviewed
 bool timer () {
                tc = millis();
                 if (!flag_timer) flag_timer = true;
                 if ((leggiswitch)&&(!flag_t1_settato)) {
-                                                               if (t!=t1){
-                                                                          if (!leggiswitch2) {
-                                                                                              Serial.print("Rele 3MIN ON");
-                                                                                              Serial.println();  
-                                                                                             } else {
-                                                                                                     Serial.print("Rele 5S ON");
-                                                                                                     Serial.println();        
-                                                                                                    }
-                                                                          t=t1;
-                                                                          t_att = millis();
-                                                                          flag_t1_settato = true;
-                                                                          flag_t2_settato = false;
-                                                                         }
-                                                             }
-                 else if ((!leggiswitch)&&(!flag_t2_settato)){ 
+                                                        if (t!=t1){
+                                                                   if (!leggiswitch2) {
+                                                                                        Serial.print("Rele 3MIN ON");
+                                                                                        Serial.println();  
+                                                                                       } else {
+                                                                                               Serial.print("Rele 5S ON");
+                                                                                               Serial.println();        
+                                                                                               }
+                                                                    flag_t1_setting();
+                                                                   }
+                                                        }
+                else if ((!leggiswitch)&&(!flag_t2_settato)){ 
                                                               if (t!=t2) {
                                                                           if (!leggiswitch2) {
                                                                                               Serial.print("Rele 30S ON");
@@ -75,26 +73,19 @@ bool timer () {
                                                                                                      Serial.print("Rele 3S ON");
                                                                                                      Serial.println();      
                                                                                                     }
-                                                                         t=t2;
-                                                                         t_att = millis();      
-                                                                         flag_t2_settato = true;
-                                                                         flag_t1_settato = false;
+                                                                         flag_t2_setting();                
                                                                          }
                                                                     }
                  if (tc-t_att<=t) return true;
                  else if (stato2) {
-                                   reset_flags();
-                                   digitalWrite(Rele1,LOW);
-                                   Serial.print("Rele Spento");
-                                   Serial.println();
-                                   reset_timer();
+                                   turn_off_timer();
                                    return false;
-                                   }
+                                  }
                 }
 
 void switch2() {
                 if (leggiswitch2) {
-                                   t1 = 5*1000;
+                                   t1 = 5*1000; // other 2 timer presets with second switching
                                    t2 = 3*1000;
                                   }
                }
@@ -104,8 +95,36 @@ void reset_timer() {
                     t = 0;
                    }
 
-void reset_flags () { 
-                     flag_timer = false;
-                     flag_t1_settato = false;
-                     flag_t2_settato = false;
-                    }
+void reset_flags() { 
+                    flag_timer = false;
+                    flag_t1_settato = false;
+                    flag_t2_settato = false;
+                   }
+
+void flag_t1_setting() {
+                        t=t1;
+                        t_att = millis();
+                        flag_t1_settato = true;
+                        flag_t2_settato = false;
+                       }
+
+void flag_t2_setting() {
+                        t=t2;
+                        t_att = millis();
+                        flag_t1_settato = false;
+                        flag_t2_settato = true;
+                       }
+
+void turn_off_timer() {
+                       reset_flags();
+                       digitalWrite(Rele1,LOW);
+                       Serial.print("Rele Spento");
+                       Serial.println();
+                       reset_timer();
+                      }
+
+void lettura_input() {
+                      leggipin = digitalRead(Puls); // aggiorna variabile pin pulsante ogni ciclo
+                      leggiswitch = digitalRead(SwitchTime);
+                      leggiswitch2 = digitalRead(SwitchTime2); // aggiorna variabili switch
+                     }
